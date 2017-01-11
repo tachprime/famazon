@@ -93,29 +93,43 @@ function getItem(userAnswers) {
 
 		} else {
 
-			let itemQty = parseInt(res[0].StockQuantity)
-			let price = parseFloat(res[0].Price);
-			fufillOrder(userAnswers, itemQty, price);
+			let item = {
+				id: userAnswers.itemID,
+				qty: userAnswers.quantity,
+				itemQty: parseInt(res[0].StockQuantity),
+				price: parseFloat(res[0].Price),
+				department: res[0].DepartmentName
+			}
+
+			fufillOrder(item);
 		}
 	});
 }
 
-function fufillOrder(userAnswers, itemQty, price) {
-	let id = userAnswers.itemID;
-	let qty = itemQty - userAnswers.quantity;
+function fufillOrder(item) {
+	let id = item.id;
+	let newQty = item.itemQty - item.qty;
 
-	connection.query('UPDATE Products Set StockQuantity = ? WHERE itemID = ?', [qty,id], (err,res) => {
+	connection.query('UPDATE Products Set StockQuantity = ? WHERE itemID = ?', [newQty,id], (err,res) => {
 		if (err) throw err;
 
 		console.log("\n Sale Completed \n");
-		printTotal(userAnswers.quantity, price);
+		printTotal(item);
 	});
 }
 
-function printTotal(qty, price) {
-	let total = qty * price;
+function printTotal(item) {
+	let total = item.qty * item.price;
+	let id = item.id;
+	let name = item.department;
 
-	console.log("\n Your Purchase Total is: $%d \n", total);
-	connection.end();
+	let query = 'UPDATE Departments Set TotalSales = TotalSales + ? WHERE DepartmentName = ?';
+
+	connection.query( query, [total, name], (err,res) => {
+		if (err) throw err;
+
+		console.log("\n Your Purchase Total is: $%d \n", total);
+		connection.end();
+	});
 }
 
