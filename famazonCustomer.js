@@ -128,7 +128,7 @@ function printTotal(item) {
 	connection.query( query, [total, name], (err,res) => {
 		if (err) throw err;
 
-		console.log("\n Your Purchase Total is: $%d \n", total);
+		console.log("\n Your Purchase Total is: $%d \n", total.toFixed(2));
 		connection.end();
 	});
 }
