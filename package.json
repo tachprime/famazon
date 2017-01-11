@@ -1,0 +1,24 @@
+{
+  "name": "famazon",
+  "version": "1.0.0",
+  "description": "Simple command line storefront",
+  "main": "famazonCustomer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tachprime/famazon.git"
+  },
+  "author": "Alex R.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tachprime/famazon/issues"
+  },
+  "homepage": "https://github.com/tachprime/famazon#readme",
+  "dependencies": {
+    "console.table": "^0.8.0",
+    "inquirer": "^2.0.0",
+    "mysql": "^2.12.0"
+  }
+}

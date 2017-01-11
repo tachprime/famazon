@@ -48,6 +48,7 @@ function promptUser(res) {
 			message: 'How many of these would you like to buy?',
 			validate: function(value) {
 				if(!isNaN(value)) {
+					if(parseInt(value) > 0)
 					return true;
 				} else {
 					console.log("\n Please enter a number!");
@@ -132,4 +133,3 @@ function printTotal(item) {
 		connection.end();
 	});
 }
-
