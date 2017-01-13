@@ -1,3 +1,4 @@
+//jshint esversion:6
 const userPass = require('./userPass.js');
 const inquirer = require('inquirer');
 const mysql = require('mysql');
@@ -12,17 +13,17 @@ var connection = mysql.createConnection({
 });
 
 connection.connect((err) => {
-    if (err) throw err;
+	if (err) throw err;
 
-    console.log("Connected to Bamazon\n");
-    showItems();
+	console.log("Connected to Bamazon\n");
+	showItems();
 });
 
 function showItems() {
-	connection.query('SELECT * FROM Products', function (err, res){
+	connection.query('SELECT * FROM Products', function (err, res) {
 		if (err) throw err;
 
-		console.table('Our Products',res);
+		console.table('Our Products', res);
 		promptUser(res);
 	});
 }
@@ -32,24 +33,27 @@ function promptUser(res) {
 	var questions = [
 		{
 			type: 'input',
-   			name: 'itemID',
-   			message: 'Please enter the ID of the Item you would like to buy',
-   			validate: function(value) {
-   				if (!isNaN(value)) {
-   					return true;
-   				} else {
-   					console.log("\n Please enter a proper ID number");
-   				}
-   			}
+			name: 'itemID',
+			message: 'Please enter the ID of the Item you would like to buy',
+			validate: function (value) {
+				if (!isNaN(value)) {
+					return true;
+				} else {
+					console.log("\n Please enter a proper ID number");
+				}
+			}
 		},
 		{
 			type: 'input',
 			name: 'quantity',
 			message: 'How many of these would you like to buy?',
-			validate: function(value) {
-				if(!isNaN(value)) {
-					if(parseInt(value) > 0)
-					return true;
+			validate: function (value) {
+				if (!isNaN(value)) {
+					if (parseInt(value) > 0 && value == parseInt(value)) {
+						return true;
+					} else {
+						console.log("\n Please enter a whole or positive number \n");
+					}
 				} else {
 					console.log("\n Please enter a number!");
 				}
@@ -89,18 +93,21 @@ function getItem(userAnswers) {
 
 		if (userAnswers.quantity > parseInt(res[0].StockQuantity)) {
 
-			console.log("\n Not enough items in stock \n")
+			console.log("\n Not enough items in stock \n");
 			showItems();
 
 		} else {
 
 			let item = {
 				id: userAnswers.itemID,
-				qty: userAnswers.quantity,
+				userQty: userAnswers.quantity,
 				itemQty: parseInt(res[0].StockQuantity),
 				price: parseFloat(res[0].Price),
-				department: res[0].DepartmentName
-			}
+				department: res[0].DepartmentName,
+				newQty: function () {
+					return this.itemQty - this.userQty;
+				}
+			};
 
 			fufillOrder(item);
 		}
@@ -108,28 +115,58 @@ function getItem(userAnswers) {
 }
 
 function fufillOrder(item) {
-	let id = item.id;
-	let newQty = item.itemQty - item.qty;
 
-	connection.query('UPDATE Products Set StockQuantity = ? WHERE itemID = ?', [newQty,id], (err,res) => {
-		if (err) throw err;
+	let receipt =
+		`\n____________________\n` +
+		`\n   Your Order \n` +
+		`-------------------- \n` +
+		`item cost: \$${item.price} \n` +
+		`      qty: ${item.userQty} \n` +
+		`--------------------\n` +
+		` Subtotal: \$${item.userQty * item.price}\n` +
+		`____________________\n`;
 
-		console.log("\n Sale Completed \n");
-		printTotal(item);
+	console.log(receipt);
+
+	confirmOrder(item);
+}
+
+function confirmOrder(item) {
+	inquirer.prompt([
+		{
+			name: 'confirm',
+			type: 'list',
+			message: 'Do you want to confirm your purchase?',
+			choices: ['Yes', 'No']
+		}
+	]).then((confirmation) => {
+		if (confirmation.confirm == 'Yes') {
+			let id = item.id;
+			let newQty = item.newQty();
+
+			connection.query('UPDATE Products Set StockQuantity = ? WHERE itemID = ?', [newQty, id], (err, res) => {
+				if (err) throw err;
+
+				updateTotalSales(item);
+			});
+		} else {
+
+			showItems();
+
+		}
 	});
 }
 
-function printTotal(item) {
-	let total = item.qty * item.price;
-	let id = item.id;
+function updateTotalSales(item) {
+	let total = item.userQty * item.price;
 	let name = item.department;
 
 	let query = 'UPDATE Departments Set TotalSales = TotalSales + ? WHERE DepartmentName = ?';
 
-	connection.query( query, [total, name], (err,res) => {
+	connection.query(query, [total, name], (err, res) => {
 		if (err) throw err;
 
-		console.log("\n Your Purchase Total is: $%d \n", total.toFixed(2));
+		console.log("\n Sale Complete! \n");
 		connection.end();
 	});
 }

@@ -1,3 +1,4 @@
+//jshint esversion:6
 const userPass = require('./userPass.js');
 const inquirer = require('inquirer');
 const mysql = require('mysql');
