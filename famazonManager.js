@@ -13,10 +13,10 @@ var connection = mysql.createConnection({
 });
 
 connection.connect((err) => {
-    if (err) throw err;
+	if (err) throw err;
 
-    console.log("\n Connected to Bamazon \n");
-    start();
+	console.log("\n Connected to Bamazon \n");
+	start();
 });
 
 function start() {
@@ -25,7 +25,7 @@ function start() {
 			name: 'menuChoice',
 			type: 'list',
 			message: 'Choose an option: ',
-			choices: 
+			choices:
 			[
 				'View Products for Sale',
 				'View Low Inventory',
@@ -36,7 +36,7 @@ function start() {
 		}
 	];
 
-	inquirer.prompt(question).then( (choice) => {
+	inquirer.prompt(question).then((choice) => {
 		runChoice(choice.menuChoice);
 	});
 }
@@ -66,7 +66,7 @@ function showAllItems() {
 	connection.query('SELECT * FROM Products', (err, res) => {
 		if (err) throw err;
 
-		console.table('Our Products',res);
+		console.table('Our Products', res);
 		start();
 	});
 }
@@ -75,78 +75,68 @@ function showLowStock() {
 	connection.query('SELECT * FROM Products WHERE StockQuantity < 5', (err, res) => {
 		if (err) throw err;
 
-		console.table('Low Inventory',res);
+		console.table('Low Inventory', res);
 		start();
 	});
 }
 
 function addToInventory() {
 
-	var questions = [
-		{
-			type: 'input',
-   			name: 'itemID',
-   			message: 'Please enter the ID of the Item to re-order',
-   			validate: function(value) {
-   				if (!isNaN(value)) {
-   					return true;
-   				} else {
-   					console.log("\n Please enter a proper ID number");
-   				}
-   			}
-		},
-		{
-			type: 'input',
-			name: 'quantity',
-			message: 'How much stock would you like to order?',
-			validate: function(value) {
-				if(!isNaN(value)) {
-					return true;
-				} else {
-					console.log("\n Please enter a number!");
+	connection.query('SELECT * FROM Products', (err, res) => {
+		if (err) throw err;
+
+		var questions = [
+			{
+				type: 'input',
+				name: 'itemID',
+				message: 'Please enter the ID of the Item to re-order',
+				validate: function (value) {
+					var validId = false;
+
+					for (var i = 0; i < res.length; i++) {
+						if (value == res[i].itemID) {
+							validId = true;
+						}
+					}
+
+					if (validId) {
+						return validId;
+					} else {
+						console.log('\n Pleaser enter a valid ID \n');
+					}
+				}
+			},
+			{
+				type: 'input',
+				name: 'quantity',
+				message: 'How much stock would you like to order?',
+				validate: function (value) {
+					if (!isNaN(value)) {
+						return true;
+					} else {
+						console.log("\n Please enter a number!");
+					}
 				}
 			}
-		}
-	];
+		];
 
-	inquirer.prompt(questions).then((answers) => {
-		connection.query('SELECT * FROM Products', (err, res) => {
-			if (err) throw err;
-
-			var idList = [];
-
-			//list of all ID's in DB table
-			for (var i = 0; i < res.length; i++) {
-				idList.push(res[i].itemID);
-			}
-
+		inquirer.prompt(questions).then((answers) => {
 			answers.itemID = parseInt(answers.itemID);
 			answers.quantity = parseInt(answers.quantity);
-
-			//compare user input to itemID's in DB table
-			if (idList.includes(answers.itemID)) {
-
-				reStockItem(answers);
-
-			} else {
-
-				console.log("Item ID does not exist!");
-				addToInventory();
-			}
-		
+			
+			reStockItem(answers);
 		});
-
 	});
 }
 
 function reStockItem(answers) {
 	let query = 'UPDATE Products Set StockQuantity = StockQuantity + ? WHERE itemID = ?';
 
-	connection.query( query, [answers.quantity,answers.itemID], (err, res) => {
+	connection.query(query, [answers.quantity, answers.itemID], (err, res) => {
 		if (err) throw err;
 
 		console.log("\n Item restocked \n");
-		start();		
+		start();
 	});
 }
 
@@ -163,7 +153,7 @@ function addNewItem() {
 			type: 'input',
 			message: 'Enter price of product',
 			validate: function (value) {
-				if(!isNaN(value)) {
+				if (!isNaN(value)) {
 					return true;
 				}
 				else {
@@ -176,7 +166,7 @@ function addNewItem() {
 			type: 'input',
 			message: 'Enter Quantity of product to stock',
 			validate: function (value) {
-				if(!isNaN(value)) {
+				if (!isNaN(value)) {
 					return true;
 				}
 				else {
@@ -191,16 +181,16 @@ function addNewItem() {
 		}
 	];
 
-	inquirer.prompt(newItemPrompt).then( (newItem) => {
+	inquirer.prompt(newItemPrompt).then((newItem) => {
 
 		let query = 'INSERT INTO `Products` (`ProductName`, `Price`, `StockQuantity`, `DepartmentName`) VALUES (?, ?, ?, ?);';
 		let data = [newItem.ProductName, newItem.Price, newItem.StockQuantity, newItem.DepartmentName];
 
-		connection.query( query, data, (err, res) => {
+		connection.query(query, data, (err, res) => {
 			if (err) throw err;
 
 			console.log("\n New item added \n");
-			start();		
+			start();
 		});
 
 	});

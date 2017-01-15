@@ -36,10 +36,18 @@ function promptUser(res) {
 			name: 'itemID',
 			message: 'Please enter the ID of the Item you would like to buy',
 			validate: function (value) {
-				if (!isNaN(value)) {
-					return true;
+				var validId = false;
+
+				for (var i = 0; i < res.length; i++) {
+					if(value == res[i].itemID) {
+						validId = true;
+					} 
+				}
+
+				if (validId) {
+					return validId;
 				} else {
-					console.log("\n Please enter a proper ID number");
+					console.log('\n Pleaser enter a valid ID \n');
 				}
 			}
 		},
@@ -48,43 +56,21 @@ function promptUser(res) {
 			name: 'quantity',
 			message: 'How many of these would you like to buy?',
 			validate: function (value) {
-				if (!isNaN(value)) {
-					if (parseInt(value) > 0 && value == parseInt(value)) {
-						return true;
-					} else {
-						console.log("\n Please enter a whole or positive number \n");
-					}
+				if (!isNaN(value) && parseInt(value) > 0 && value == parseInt(value)) {
+
+					return true;
+
 				} else {
-					console.log("\n Please enter a number!");
+
+					console.log("\n Please enter a number! \n");
+
 				}
 			}
 		}
 	];
 
 	inquirer.prompt(questions).then((answers) => {
-
-		var idList = [];
-
-		//list of all ID's in DB table
-		for (var i = 0; i < res.length; i++) {
-			idList.push(res[i].itemID);
-		}
-
-		answers.itemID = parseInt(answers.itemID);
-		answers.quantity = parseInt(answers.quantity);
-
-		//compare user input to itemID's in DB table
-		if (idList.includes(answers.itemID)) {
-
 			getItem(answers);
-
-		} else {
-
-			console.log("Item ID does not exist!");
-			promptUser(res);
-
-		}
-
 	});
 }
 
